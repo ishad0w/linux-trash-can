@@ -13,8 +13,9 @@ Reference for what to keep and what to remove when trimming a generic kernel con
 
 ### GPU
 - amdgpu + DRM_AMDGPU_SI (D300/D500/D700 = Tahiti/Pitcairn, GCN 1.0)
-- radeon (fallback)
 - virtio-gpu (KVM guests)
+
+The repo's documented runtime path targets `amdgpu`, not legacy `radeon`. The trimmed raw model config already disables `CONFIG_DRM_RADEON`.
 
 ### Networking
 - tg3 + BROADCOM_PHY (BCM57762 dual gigabit)

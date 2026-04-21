@@ -30,7 +30,7 @@ VM_RAM="16G"                  # Mac Pro 6,1 has 12-64GB; 16G is safe default
 VM_CPU_SOCKETS=1
 VM_CPU_CORES=4                # E5-1620v2=4c, E5-1650v2=6c, E5-1680v2=8c
 VM_CPU_THREADS=2              # Hyperthreading enabled
-VM_CPU_MODEL="Haswell-noTSX"  # Closest to Ivy Bridge-EP that macOS likes
+VM_CPU_MODEL="Haswell-noTSX"  # Toolkit-generated conservative named CPU model; docs/kvm-macos.md documents a separate -cpu host manual path
 VM_CPU_FEATURES="+ssse3,+sse4.2,+popcnt,+avx,+aes,+xsave,+xsaveopt,+abm,+bmi1,+bmi2,check"
 VM_DISK_SIZE="128G"           # qcow2 sparse, actual usage ~50-60GB after install
 VM_DISPLAY_RES="1920x1080"
@@ -45,12 +45,9 @@ APPLE_CATALOG_URL="https://swscan.apple.com/content/catalogs/others/index-15seed
 BOARD_ID="Mac-F60DEB81FF30ACF6"
 MLB="F5KLA770F9VM"
 
-# -- OVMF firmware URLs --------------------------------------------------------
-OVMF_CODE_URL="https://github.com/nicknisi/OVMF/raw/main/OVMF_CODE.fd"
-OVMF_VARS_URL="https://github.com/nicknisi/OVMF/raw/main/OVMF_VARS-1920x1080.fd"
-# Fallback: build from edk2 or use the ones from ultimate-macOS-KVM
-OVMF_CODE_ALT="https://github.com/Coopydood/ultimate-macOS-KVM/raw/main/ovmf/OVMF_CODE.fd"
-OVMF_VARS_ALT="https://github.com/Coopydood/ultimate-macOS-KVM/raw/main/ovmf/OVMF_VARS.fd"
+# -- OVMF firmware strategy ----------------------------------------------------
+# Prefer distro-provided OVMF packages and copy the firmware into the local VM
+# directory. Historical GitHub-hosted fallback URLs have proven brittle.
 
 # -- Colours -------------------------------------------------------------------
 RED='\033[0;31m'
@@ -121,9 +118,9 @@ check_deps() {
         err "Missing dependencies: ${missing[*]}"
         echo ""
         echo "Install with:"
-        echo "  sudo apt install qemu-system-x86 qemu-utils python3 wget curl openssl"
+        echo "  sudo apt install qemu-system-x86 qemu-utils ovmf python3 wget curl openssl"
         echo "  — or —"
-        echo "  sudo dnf install qemu-kvm qemu-img python3 wget curl openssl"
+        echo "  sudo dnf install qemu-kvm qemu-img edk2-ovmf python3 wget curl openssl"
         echo "  — or —"
         echo "  sudo pacman -S --needed qemu-full edk2-ovmf python wget curl openssl"
         echo ""
@@ -214,17 +211,7 @@ download_ovmf() {
         return 0
     fi
 
-    info "Downloading OVMF UEFI firmware..."
-
-    wget -q --show-progress -O "$OVMF_DIR/OVMF_CODE.fd" "$OVMF_CODE_URL" 2>&1 || \
-        wget -q --show-progress -O "$OVMF_DIR/OVMF_CODE.fd" "$OVMF_CODE_ALT" 2>&1 || \
-        fatal "Failed to download OVMF_CODE.fd — install edk2-ovmf (Arch) or ovmf (Debian/Ubuntu)"
-
-    wget -q --show-progress -O "$OVMF_DIR/OVMF_VARS.fd" "$OVMF_VARS_URL" 2>&1 || \
-        wget -q --show-progress -O "$OVMF_DIR/OVMF_VARS.fd" "$OVMF_VARS_ALT" 2>&1 || \
-        fatal "Failed to download OVMF_VARS.fd — install edk2-ovmf (Arch) or ovmf (Debian/Ubuntu)"
-
-    ok "OVMF firmware downloaded"
+    fatal "System OVMF firmware not found — install edk2-ovmf (Arch/Fedora) or ovmf (Debian/Ubuntu), or stage OVMF_CODE.fd and OVMF_VARS.fd in ${OVMF_DIR}"
 }
 
 # =============================================================================

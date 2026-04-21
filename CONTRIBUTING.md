@@ -1,5 +1,7 @@
 # Contributing to linux-mac
 
+This repository currently has two build surfaces: the raw model-config path under `configs/` + `scripts/build.sh`, and the shipped Arch packaging path under `packaging/arch/`. If your change affects user-facing behavior, document which path it applies to and update the relevant docs accordingly.
+
 ## Adding Support for a New Mac Model
 
 This is the single most valuable contribution. Here's how:
@@ -54,6 +56,8 @@ Follow the pattern in `configs/MacPro6,1/config`:
 - Boot it (keep stock kernel as fallback!)
 - Verify all hardware works
 - Document what works/doesn't in your README.md
+
+If you touch the packaged Arch path, also inspect `packaging/arch/PKGBUILD` and the install hook behavior before calling the change complete.
 
 ### 7. Submit a PR
 

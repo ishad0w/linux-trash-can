@@ -4,7 +4,7 @@ Audit kernel config: convert all =m to either =y or "not set".
 Goal: zero-module workstation kernel for Mac Pro 6,1.
 
 Usage: python3 audit-modules.py <config-file>
-Writes output to <config-file>.audited
+Rewrites <config-file> in place
 
 After applying, run `make olddefconfig` on the build machine to
 resolve any dependency issues.

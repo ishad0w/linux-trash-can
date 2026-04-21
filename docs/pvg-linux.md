@@ -1,5 +1,7 @@
 # pvg-linux: Open-Source Apple ParavirtualizedGraphics Host for Linux
 
+This is a design document for a possible future subsystem. It does not describe an implemented host stack in this repository.
+
 ## The Opportunity
 
 QEMU 10.0 introduced `apple-gfx-pci` — a paravirtualized GPU device for macOS guests. macOS 11+ ships built-in PVG (ParavirtualizedGraphics) guest drivers. The **guest side is complete** — no custom kexts needed.
@@ -18,10 +20,10 @@ macOS Metal app → OCLP legacy kext shims → abandoned AMD drivers (2017) → 
 ### The PVG Pipeline (this project)
 ```
 macOS Metal app → built-in PVG driver → apple-gfx-pci → Linux PVG host
-  → Mesa radeonsi/RADV → amdgpu (kernel 6.19) → GPU
+  → Mesa radeonsi/RADV → amdgpu (modern Linux kernel) → GPU
 ```
 
-The Linux driver stack is **9 years newer** than what OCLP shims. Kernel 6.19 alone brings 25-40% improvements for GCN 1.0 GPUs.
+The Linux driver stack is materially newer than the frozen legacy macOS path on these GPUs. The exact gain depends on workload, Mesa version, and whether you compare against stock macOS or an OCLP setup.
 
 **Caveat:** The PVG command format between the guest driver and host framework is proprietary and undocumented. Building this pipeline requires reverse-engineering that protocol. The transport layer (how data moves) is documented in QEMU. The translation layer (what the GPU commands mean) is not. See "What's Known vs What's a Black Box" below.
 
@@ -52,7 +54,7 @@ The Linux driver stack is **9 years newer** than what OCLP shims. Kernel 6.19 al
 │                    └─────┬─────┘                      │
 │                          │                            │
 │                    ┌─────┴─────┐                      │
-│                    │  amdgpu   │ kernel 6.19           │
+│                    │  amdgpu   │ modern Linux kernel   │
 │                    └─────┬─────┘                      │
 │                          │                            │
 │                    ┌─────┴─────┐                      │

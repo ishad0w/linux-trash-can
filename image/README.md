@@ -1,8 +1,8 @@
-# Pre-configured ISO for Mac Pro 6,1
+# Image Workflow for Mac Pro 6,1
 
 ## Overview
 
-A ready-to-install ISO specifically for the Mac Pro 6,1, including the custom kernel, Mesa 26.1-dev with RADV Vulkan, and macOS Tahoe KVM one-click setup.
+ISO build assets and integration notes for a Mac Pro 6,1-oriented image flow. The committed implementation prepares an AnduinOS-based build workspace, overlays Mac Pro defaults, and integrates the macOS Tahoe KVM toolkit. A fully custom kernel and Mesa stack are optional inputs, not guaranteed by the script unless you provide them.
 
 | ISO | Base | Desktop | Installer | Target |
 |-----|------|---------|-----------|--------|
@@ -10,21 +10,20 @@ A ready-to-install ISO specifically for the Mac Pro 6,1, including the custom ke
 
 ## What's Included
 
-A fully configured, opinionated system. Everything is pre-configured and working out of the box.
+A prepared image workflow with optional custom components.
 
-The ISO ships with:
+What this tree can provide:
 
 - **Desktop environment** — GNOME, fully configured
-- **Custom kernel** (`linux-macpro61`) — amdgpu=m, SI support, KVM, no gmux, Ivy Bridge optimized
-- **Mesa 26.1-dev** with RADV Vulkan — latest GCN 1.0 fixes, full GPU acceleration
-- **macOS Tahoe KVM** — desktop icon, one-click setup, auto-downloads recovery directly from Apple
-- **OpenCore.qcow2** — pre-configured for macOS Tahoe on Ivy Bridge-EP KVM
-- **Fan control** — macfanctld with Mac Pro 6,1 curve profiles
+- **Custom kernel** (`linux-macpro61`) — optional, if you pass `--kernel-deb` to the build script
+- **Custom Mesa `.deb` set** with RADV Vulkan — optional, if you pass `--mesa-debs` to the build script
+- **macOS Tahoe KVM** — desktop icon and one-click setup scripts, with recovery downloaded directly from Apple
+- **OpenCore.qcow2** — optional, included only if present under `macos-tahoe-kvm/opencore-efi/`
+- **Fan/sysctl defaults** — this tree ships sysctl overlay; fan control docs/config live in `configs/MacPro6,1/fan/`
 - **Sysctl tuning** — kvm.ignore_msrs, network, memory optimizations
-- **Boot entries** — pre-configured for Mac Pro 6,1 EFI
-- **No configuration required** — boot USB, install, done
+- **First-boot Tahoe launcher setup** — systemd oneshot added to the image overlay
 
-The macOS recovery image (~700MB) downloads directly from Apple's servers when you click the desktop icon. The one-click setup handles everything automatically.
+The macOS recovery image (~700MB) downloads directly from Apple's servers when you click the desktop icon. The one-click setup implements the current toolkit flow: dependency checks, local OVMF staging, recovery download, disk creation, and launch-script generation. The manual OSX-KVM path remains separately documented in [`../docs/kvm-macos.md`](../docs/kvm-macos.md), and the remaining divergence between these Tahoe launch surfaces is tracked in [`../TECH-DEBT.md`](../TECH-DEBT.md).
 
 ## Build
 
@@ -34,17 +33,18 @@ The macOS recovery image (~700MB) downloads directly from Apple's servers when y
 # Requires: AMD64 Linux host, debootstrap, live-build, squashfs-tools
 cd image/anduinos
 sudo ./build.sh
-# Output: dist/linux-mac-anduinos-*.iso
 ```
+
+The committed `build.sh` is a preparation/orchestration script. It clones the AnduinOS build system, prepares overlays, stages optional `.deb` inputs, and prints the remaining manual build steps that happen inside the upstream AnduinOS tree.
 
 **How it works:**
 1. Clones AnduinOS build system (Ubuntu LTS + GNOME + Calamares)
-2. Injects custom kernel package (.deb built from our config)
-3. Adds Mesa 26.1-dev packages
+2. Optionally injects a custom kernel package (`--kernel-deb`)
+3. Optionally stages Mesa packages (`--mesa-debs`)
 4. Copies macOS Tahoe KVM toolkit to /opt/macos-tahoe-kvm/
 5. Installs desktop launcher (first-boot systemd oneshot)
-6. Adds sysctl tuning and fan control
-7. Builds bootable ISO with Calamares installer
+6. Adds sysctl tuning overlay
+7. Hands off to the upstream AnduinOS build flow
 
 
 ## Directory Structure
@@ -52,22 +52,14 @@ sudo ./build.sh
 ```
 image/
 ├── README.md              # This file
-├── common/                # Shared between both ISOs
+├── common/                # Shared overlay/package inputs
 │   ├── overlay/           # Filesystem overlay (sysctl, scripts, etc.)
 │   │   ├── etc/
 │   │   │   └── sysctl.d/
 │   │   │       └── 99-macpro.conf
-│   │   ├── opt/
-│   │   │   └── macos-tahoe-kvm/  → symlink to ../../macos-tahoe-kvm/
-│   │   └── usr/
-│   │       └── share/
-│   │           └── applications/
-│   │               └── macos-tahoe-kvm.desktop
 │   └── packages-common.txt
 ├── anduinos/
 │   ├── build.sh           # AnduinOS ISO build script
-│   ├── packages.txt       # Ubuntu packages to add
-│   └── hooks/             # Calamares post-install hooks
 ```
 
 ## Build Dependencies
@@ -79,10 +71,10 @@ debootstrap live-build squashfs-tools xorriso mtools grub-efi-amd64-bin
 
 ## Release Workflow
 
-1. Build custom kernel: `cd packaging/arch && makepkg -s`
-2. Build AnduinOS ISO: `cd image/anduinos && sudo ./build.sh`
-3. Test in QEMU: `qemu-system-x86_64 -cdrom dist/*.iso -m 4G`
-4. Write to USB: `dd if=dist/*.iso of=/dev/sdX bs=4M status=progress`
-5. Boot Mac Pro 6,1 from USB
-6. Install via Calamares
-7. Reboot (full poweroff, NOT warm reboot!)
+1. Build or obtain a custom kernel `.deb` if you want the non-stock kernel
+2. Build or obtain Mesa `.deb` packages if you want a non-stock Mesa stack
+3. Run `cd image/anduinos && sudo ./build.sh [--kernel-deb ...] [--mesa-debs ...]`
+4. Follow the manual build/remaster steps printed by the script inside the AnduinOS workspace
+5. Test the resulting ISO in QEMU
+6. Write to USB and boot Mac Pro 6,1 hardware
+7. Install via Calamares and use full poweroff, not warm reboot, when switching kernels

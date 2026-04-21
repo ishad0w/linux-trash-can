@@ -6,6 +6,8 @@ Apple dropped macOS support for the Mac Pro 6,1. OpenCore Legacy Patcher (OCLP) 
 
 This project takes a different approach: run macOS Tahoe as a KVM guest on a custom Linux kernel tuned for the 6,1 hardware. The Linux kernel handles the hardware directly with modern drivers, and macOS runs in a high-performance virtual machine.
 
+This guide documents the manual OSX-KVM-style workflow. It is not the same directory or launch contract as [`../scripts/launch-macos.sh`](../scripts/launch-macos.sh) or [`../macos-tahoe-kvm/scripts/macos-tahoe-setup.sh`](../macos-tahoe-kvm/scripts/macos-tahoe-setup.sh), which currently use different recovery-image, OpenCore, CPU-model, and display defaults.
+
 **Right now (Phase 1):** macOS Tahoe boots and runs with software rendering via QXL. CPU-bound tasks run at near-native speed (KVM overhead is 2-5%). The host's amdgpu driver handles display compositing.
 
 **Future (Phase 3):** Full GPU acceleration via open-source PVG host implementation. See [pvg-linux.md](pvg-linux.md) for the roadmap.
@@ -17,7 +19,7 @@ This project takes a different approach: run macOS Tahoe as a KVM guest on a cus
 - At least 32GB RAM (16GB for host, 16GB for guest)
 - 100GB+ free disk space for the macOS disk image
 - QEMU 8.0+ with KVM support
-- The [OSX-KVM](https://github.com/kholia/OSX-KVM) project (provides OpenCore image, OVMF firmware, and recovery download tools)
+- The [OSX-KVM](https://github.com/kholia/OSX-KVM) project for this manual path (provides OpenCore image, OVMF firmware, and recovery download tools)
 - `dmg2img` package for converting recovery images
 
 Using the custom `linux-macpro61` kernel from this project is optional but recommended -- it includes built-in firmware, KVM tuning, and sysctl defaults that improve macOS guest performance.
@@ -129,6 +131,8 @@ This downloads `BaseSystem.dmg` from Apple's CDN. Convert it to a raw image that
 ```bash
 dmg2img -i BaseSystem.dmg BaseSystem.img
 ```
+
+This manual path intentionally uses `BaseSystem.img`. Do not assume it is interchangeable with the generated Tahoe toolkit, which currently keeps the Apple recovery file as `BaseSystem.dmg`.
 
 ### Step 3: Create macOS Disk Image
 

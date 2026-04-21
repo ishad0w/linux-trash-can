@@ -4,14 +4,14 @@
 # =============================================================================
 # Builds a pre-configured AnduinOS (Ubuntu LTS + GNOME) ISO with:
 #   - Custom linux-macpro61 kernel
-#   - Mesa 26.1-dev with RADV Vulkan
+#   - Optional custom Mesa .deb set with RADV Vulkan
 #   - macOS Tahoe KVM one-click setup
 #   - Fan control and sysctl tuning
 #
 # Requirements: AMD64 Linux host with debootstrap, live-build, squashfs-tools,
 #               xorriso, mtools, grub-efi-amd64-bin
 #
-# Usage: sudo ./build.sh [--kernel-deb /path/to/linux-macpro61.deb]
+# Usage: sudo ./build.sh [--kernel-deb /path/to/linux-macpro61.deb] [--mesa-debs /path/to/debs-dir]
 # =============================================================================
 
 set -euo pipefail
@@ -55,7 +55,7 @@ for cmd in debootstrap xorriso mtools squashfs-tools; do
     fi
 done
 
-mkdir -p "$DIST_DIR" "$WORK_DIR"
+mkdir -p "$DIST_DIR" "$WORK_DIR" "$WORK_DIR/custom-debs"
 
 # --- Step 1: Clone AnduinOS build system --------------------------------------
 echo ""
@@ -85,9 +85,9 @@ else
     echo "  The ISO will use stock Ubuntu kernel (add custom kernel post-install)."
 fi
 
-# --- Step 3: Inject Mesa 26.1-dev --------------------------------------------
+# --- Step 3: Inject custom Mesa packages -------------------------------------
 echo ""
-echo "[3/7] Injecting Mesa 26.1-dev..."
+echo "[3/7] Injecting custom Mesa packages..."
 
 if [ -n "$MESA_DEBS" ] && [ -d "$MESA_DEBS" ]; then
     echo "  Using Mesa debs from: $MESA_DEBS"
@@ -95,7 +95,7 @@ if [ -n "$MESA_DEBS" ] && [ -d "$MESA_DEBS" ]; then
 else
     echo "  No --mesa-debs provided."
     echo "  The ISO will use Ubuntu's Mesa packages."
-    echo "  For GCN 1.0, consider adding Oibaf PPA or building from git."
+    echo "  For GCN 1.0, add a newer Mesa stack only if you have a specific package set to stage."
 fi
 
 # --- Step 4: Add macOS Tahoe KVM toolkit --------------------------------------
@@ -200,7 +200,7 @@ echo "  AnduinOS src:   $WORK_DIR/AnduinOS/"
 echo ""
 echo "  Next steps:"
 echo "    1. Build custom kernel .deb (or convert from Arch PKGBUILD)"
-echo "    2. Build Mesa 26.1-dev .deb packages"
+echo "    2. Build custom Mesa .deb packages (optional)"
 echo "    3. Run AnduinOS build on AMD64 Ubuntu host"
 echo "    4. Test ISO in QEMU"
 echo "    5. Write to USB and boot on Mac Pro 6,1"

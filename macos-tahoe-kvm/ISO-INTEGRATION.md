@@ -2,12 +2,13 @@
 
 ## Overview
 
-This toolkit adds a **desktop icon** to your custom Linux ISO that lets customers
-download and run macOS Tahoe in a pre-configured KVM virtual machine. The Mac Pro 6,1
-hardware is auto-detected and the VM is tuned accordingly.
+This toolkit adds a **desktop icon** to your custom Linux ISO that installs the
+current Tahoe-on-KVM setup flow. The Mac Pro 6,1 hardware is auto-detected and
+the generated VM defaults are tuned accordingly.
 
 **What's automated:** dependency check, hardware detection, macOS recovery download
-from Apple, virtual disk creation, QEMU config generation, VM launch.
+from Apple, local OVMF staging from installed system packages, virtual disk
+creation, QEMU config generation, VM launch.
 
 **What's manual:** the macOS installer GUI itself (disk selection, account creation,
 Apple ID).
@@ -24,14 +25,20 @@ macos-tahoe-kvm/
 ├── opencore-efi/
 │   └── OpenCore.qcow2               # ← YOU MUST PROVIDE THIS
 ├── vm/                               # (created at runtime)
-│   ├── ovmf/                         # UEFI firmware (auto-downloaded)
-│   ├── recovery/                     # macOS recovery (auto-downloaded)
+│   ├── ovmf/                         # UEFI firmware (copied from system OVMF package)
+│   ├── recovery/                     # macOS recovery (auto-downloaded as BaseSystem.dmg)
 │   └── macOS-Tahoe.qcow2            # Virtual disk (auto-created)
 ├── launch-macos-tahoe.sh            # (generated) QEMU launch script
 └── ISO-INTEGRATION.md               # This file
 ```
 
 ## Integration Steps
+
+This toolkit has its own `vm/`-based layout and keeps the Apple recovery file as
+`BaseSystem.dmg`. It is not the same layout as the manual OSX-KVM-style flow
+documented in [`../docs/kvm-macos.md`](../docs/kvm-macos.md).
+The remaining divergence between these Tahoe launch surfaces is tracked in
+[`../TECH-DEBT.md`](../TECH-DEBT.md).
 
 ### 1. Prepare OpenCore EFI
 
@@ -96,8 +103,10 @@ clicks the icon, if it's already done, setup skips straight to VM config.
 Ensure your ISO includes these packages:
 
 ```
-qemu-system-x86 qemu-utils python3 wget curl openssl
+qemu-system-x86 qemu-utils python3 wget curl openssl ovmf
 ```
+
+On Arch-like systems, use the distro-equivalent OVMF package such as `edk2-ovmf`.
 
 For GPU passthrough, also include:
 ```
@@ -117,7 +126,7 @@ intel_iommu=on iommu=pt
 4. Setup auto-detects hardware (CPU cores, RAM, GPUs)
 5. Downloads macOS Tahoe recovery from Apple (~700MB, ~5min)
 6. Creates pre-configured VM (disk, QEMU args, network)
-7. Launches VM → macOS installer appears
+7. Launches the VM with the toolkit's generated QEMU args
 8. Customer walks through macOS install (15-30min)
 9. After install, delete recovery image, re-launch with `./launch-macos-tahoe.sh`
 
@@ -152,7 +161,7 @@ Edit the `VM_*` variables at the top of `scripts/macos-tahoe-setup.sh`:
 |----------|---------|-------|
 | `VM_RAM` | auto-detected (75% of total) | Capped at 48G |
 | `VM_CPU_CORES` | auto-detected (total - 2) | Leave 2 for host |
-| `VM_CPU_MODEL` | `Haswell-noTSX` | Works on Ivy Bridge-EP via KVM |
+| `VM_CPU_MODEL` | `Haswell-noTSX` | Toolkit default; the separate manual guide in `docs/kvm-macos.md` uses `-cpu host` |
 | `VM_DISK_SIZE` | `128G` | qcow2 sparse, real usage ~50-60G |
 | `VM_NET_DEVICE` | `vmxnet3` | Use `e1000-82545em` if network issues |
 | `BOARD_ID` | Mac Pro 6,1 board ID | For macrecovery download |

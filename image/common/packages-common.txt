@@ -13,7 +13,7 @@ spice-client-gtk
 dnsmasq-base
 bridge-utils
 
-# GPU drivers (Mesa 26.1-dev or latest available)
+# GPU drivers (keep version selection in the build inputs, not here)
 # mesa-vulkan-drivers  # provides RADV
 # mesa-utils
 

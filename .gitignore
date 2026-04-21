@@ -19,6 +19,8 @@ System.map
 *~
 .vscode/
 .idea/
+__pycache__/
+*.pyc
 
 # OS
 .DS_Store

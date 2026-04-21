@@ -5,7 +5,7 @@
 | Component | Details | Kernel Driver | Config Option |
 |-----------|---------|--------------|---------------|
 | **CPU** | Intel Xeon E5-1620 v2 to E5-2697 v2 (Ivy Bridge-EP) | — | CachyOS base + `-march=ivybridge -O3` via KCFLAGS |
-| **GPU** | 2x AMD FirePro D300/D500/D700 (Tahiti XT, GCN 1.0 / Southern Islands, PCI `1002:6798`) | `amdgpu` | `CONFIG_DRM_AMDGPU=y`, `CONFIG_DRM_AMDGPU_SI=y` |
+| **GPU** | 2x AMD FirePro D300/D500/D700 (Pitcairn or Tahiti, GCN 1.0 / Southern Islands, PCI `1002:6819` or `1002:6798`) | `amdgpu` | Raw model config: `CONFIG_DRM_AMDGPU=m`, `CONFIG_DRM_AMDGPU_SI=y`; Arch package path forces `CONFIG_DRM_AMDGPU=y` |
 | **Ethernet** | Broadcom BCM57762 Dual Gigabit | `tg3` | `CONFIG_TIGON3=y` |
 | **Wi-Fi** | Broadcom BCM4360 802.11ac | `wl` (proprietary) | Out-of-tree: `broadcom-wl-dkms` (AUR) |
 | **Audio** | Intel HDA + Cirrus Logic CS4206 | `snd_hda_intel` | `CONFIG_SND_HDA_INTEL=y`, `CONFIG_SND_HDA_CODEC_CIRRUS=y` |
@@ -20,7 +20,7 @@
 
 ## Performance Patches
 
-Built on CachyOS 7.0 patch set:
+Applied in the Arch packaging path (`packaging/arch/PKGBUILD`), not by the raw `scripts/build.sh` path:
 - **BORE** scheduler (Burst-Oriented Response Enhancer)
 - **BBR3** TCP congestion control
 - CachyOS kernel tweaks and fixes
@@ -30,7 +30,7 @@ Built on CachyOS 7.0 patch set:
 
 The D700 is based on AMD's Tahiti XT GPU (same silicon as the Radeon HD 7970). It's GCN 1.0 (Southern Islands). Despite Apple marketing referencing "FirePro D700", `lspci` identifies them as `1002:6798` and the amdgpu driver initializes them as TAHITI.
 
-- **Kernel driver:** `amdgpu` built into kernel (`=y`) with SI support — requires `CONFIG_DRM_AMDGPU_SI=y`
+- **Kernel driver:** the trimmed raw model config keeps `amdgpu` as a module (`CONFIG_DRM_AMDGPU=m`) with SI support enabled and disables legacy `radeon`; the Arch packaging path forces `amdgpu` built-in during `prepare()` but still starts from a more generic package seed config
 - **Firmware:** Tahiti: `tahiti_{ce,mc,me,pfp,rlc,smc}.bin` — Pitcairn: `pitcairn_{ce,mc,me,pfp,rlc,smc}.bin`
 - **Mesa driver:** `radeonsi` (OpenGL), `RADV` (Vulkan)
 - **Kernel 7.0:** Mature amdgpu SI support
@@ -39,8 +39,8 @@ The D700 is based on AMD's Tahiti XT GPU (same silicon as the Radeon HD 7970). I
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Display (DP) | ✅ Works | Via amdgpu + DC |
-| Display (HDMI) | ✅ Works | Via amdgpu + DC |
+| Display (DP) | ✅ Works | Via amdgpu SI legacy display path (`amdgpu.dc=0`) |
+| Display (HDMI) | ✅ Works | Via amdgpu SI legacy display path (`amdgpu.dc=0`) |
 | Display (TB) | ⚠️ Works with issues | Log spam — see Known Issues |
 | OpenGL | ✅ Works | Via Mesa radeonsi |
 | Vulkan | ✅ Works | Via Mesa RADV |
@@ -69,7 +69,7 @@ The 6,1 generates excessive kernel log messages related to Thunderbolt hotplug d
 - Patches in `patches/` directory (when available)
 
 ### GPU Ring Timeouts Under Sustained Load
-Running heavy GPU compute (e.g., LLM inference) on the FirePro D300/D500/D700 can cause ring timeout errors and system crashes. The custom kernel with built-in amdgpu driver and correct firmware may improve stability.
+Running heavy GPU compute (e.g., LLM inference) on the FirePro D300/D500/D700 can cause ring timeout errors and system crashes. The packaged kernel path forces built-in amdgpu and embeds the relevant firmware; the raw model config keeps `amdgpu` modular, so stability comparisons should account for which build path you tested.
 
 ### Sleep/Wake
 Explicitly disabled in the kernel config (`CONFIG_SUSPEND`, `CONFIG_ACPI_SLEEP`, `CONFIG_HIBERNATION` all unset). Sleep/wake has always been unreliable on the Mac Pro 6,1 under Linux, and this is a workstation/server kernel — if it's on, it's on.
@@ -86,6 +86,11 @@ Explicitly disabled in the kernel config (`CONFIG_SUSPEND`, `CONFIG_ACPI_SLEEP`,
 The kernel config includes firmware for all GPU variants: Tahiti (D500/D700) and Pitcairn (D300). No changes needed regardless of which model you have.
 
 All Mac Pro 6,1 configurations share the same Thunderbolt controller, ethernet, Wi-Fi, and audio. The only hardware differences are CPU core count (4-12 cores, all Ivy Bridge-EP), RAM amount (no kernel impact), and GPU variant (firmware handled above). Aftermarket NVMe via PCIe adapter is extremely common — the kernel config includes both NVMe (`CONFIG_BLK_DEV_NVME=y`) and AHCI (`CONFIG_SATA_AHCI=y`) built-in.
+
+The repository currently carries two kernel build paths with different starting points:
+
+- [`config`](config) is the trimmed raw model config used by [`../../scripts/build.sh`](../../scripts/build.sh)
+- [`../../packaging/arch/config`](../../packaging/arch/config) is the package seed config used by [`../../packaging/arch/PKGBUILD`](../../packaging/arch/PKGBUILD), which then forces critical options to `=y`
 
 ## PCI Device IDs
 

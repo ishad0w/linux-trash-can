@@ -24,13 +24,15 @@ Every layer is open-source, actively maintained, and improving with each release
 | FirePro D500 | 3GB GDDR5 | Tahiti | 1.0 (SI) | `1002:6798` | 1792 |
 | FirePro D700 | 6GB GDDR5 | Tahiti XT | 1.0 (SI) | `1002:6798` | 2048 (32 CUs) |
 
-All are GCN 1.0 (Southern Islands). The `amdgpu` kernel driver handles them with `amdgpu.si_support=1`. This kernel does not include the legacy `radeon` driver.
+All are GCN 1.0 (Southern Islands). The working runtime path in this repo is `amdgpu` with `amdgpu.si_support=1`. The trimmed raw model config disables legacy `radeon`; the package seed config still carries `CONFIG_DRM_RADEON=m`, but the documented support path targets `amdgpu`.
 
 ## What Works Today
 
 ### OpenGL (radeonsi)
 
 Full OpenGL 4.6 support via Mesa's `radeonsi` driver. This is mature, stable, and performant.
+
+Example output from one Mesa `26.1.0-devel` test system:
 
 ```
 $ glxinfo | grep "OpenGL version"
@@ -58,6 +60,8 @@ Hardware video decode via AMD's UVD (Unified Video Decoder):
 | VC-1 | Hardware decode |
 | H.265 / HEVC | Not supported (needs GCN 2.0+) |
 | VP9 / AV1 | Not supported |
+
+Example output from one Mesa `26.1.0-devel` test system:
 
 ```
 $ vainfo
@@ -106,18 +110,18 @@ Mesa improvements for GCN 1.0 have been significant in recent releases:
 | 24.0+ | radeonsi NIR backend (replaces TGSI), better shader compilation |
 | 24.2+ | RADV improvements for older GCN |
 | 25.0+ | rusticl OpenCL stability |
-| 26.1 (current) | Continued radeonsi/RADV refinement |
+| 26.x development snapshots | Continued radeonsi/RADV refinement and regression fixes |
 
-**Recommendation:** Use the latest Mesa available. On CachyOS/Arch:
+**Recommendation:** Use the newest stable Mesa available for your distribution. On CachyOS/Arch:
 ```bash
 # Stable
 sudo pacman -S mesa vulkan-radeon
 
-# Bleeding edge (mesa-git from CachyOS repos)
+# Optional test path (mesa-git from CachyOS repos)
 sudo pacman -S mesa-git
 ```
 
-This system is running `mesa-git 26.1.0-devel` from CachyOS.
+One validated test system used `mesa-git 26.1.0-devel` from CachyOS.
 
 ## Dual GPU Usage
 
@@ -151,15 +155,15 @@ export RADV_PERFTEST=gpl,nggc
 
 ## Kernel Parameters
 
-The linux-macpro61 kernel and ISO set these automatically:
+The packaged `linux-macpro61` path bakes these into its kernel command line. If you use the raw builder or another distro kernel, add them explicitly in your bootloader:
 
 ```
 amdgpu.si_support=1    # Enable Southern Islands in amdgpu
 amdgpu.dc=0            # Display Core off (SI uses legacy display path)
-acpi_mask_gpe=0x16     # Mask Thunderbolt ACPI storm (GPE16 on Mac Pro 6,1)
+acpi_mask_gpe=0x16     # Mask Thunderbolt ACPI storm (GPE16 on the packaged path)
 ```
 
-The modprobe config (`/etc/modprobe.d/macpro-gpu.conf`) ensures these persist after installation.
+Historical raw-builder test captures in this repo also show an older `acpi_mask_gpe=0x10000` tuning variant. Treat that as archival evidence, not the current packaged default.
 
 ## Acceleration Roadmap
 
@@ -178,7 +182,7 @@ The modprobe config (`/etc/modprobe.d/macpro-gpu.conf`) ensures these persist af
 
 ## macOS Tahoe in KVM
 
-This kernel includes KVM support. macOS Tahoe runs in QEMU on top of the accelerated amdgpu kernel driver -- the same driver stack powering the Linux host. The guest runs on real GPU hardware through KVM.
+This kernel includes KVM support. macOS Tahoe runs in QEMU on top of the accelerated amdgpu kernel driver that powers the Linux host. Today the guest boots through virtual display emulation; exposing host GPU acceleration to the guest is future PVG work, not a delivered feature.
 
 For exposing Metal/3D to the guest (PVG -- paravirtualizing Metal commands through Mesa on the host), see [pvg-linux.md](pvg-linux.md).
 
@@ -188,13 +192,13 @@ Apple dropped macOS support for the 6,1. OCLP tries to bring it back by shimming
 
 | | Linux (this project) | macOS (OCLP) |
 |---|---|---|
-| GPU driver age | 2026 (actively maintained) | 2013 kexts (shimmed) |
+| GPU driver stack | Modern upstream Mesa/amdgpu stack | Legacy Apple drivers via OCLP |
 | OpenGL | 4.6 | 4.1 (Apple's last) |
 | Vulkan | 1.3+ via RADV | MoltenVK (translation layer) |
 | Metal | N/A | Shimmed, fragile |
 | Video decode | UVD (H.264) | VDA (similar) |
 | Stability | Solid (native driver) | Breaks on macOS updates |
-| Future | Improving every Mesa release | Deprecated, OCLP may drop 6,1 |
+| Future | Improves as Mesa/amdgpu advance | Deprecated, OCLP may drop 6,1 |
 
 ## Further Reading
 
