@@ -20,7 +20,7 @@ This is not a full hardware validation report. Some items are confirmed by direc
 
 ### TD-001 — Two kernel build systems produce materially different kernels
 
-**State:** open  
+**State:** open
 **Area:** kernel build / packaging
 
 Evidence:
@@ -43,7 +43,7 @@ Exit criteria:
 
 ### TD-002 — macOS Tahoe KVM tooling has three incompatible artifact layouts
 
-**State:** open  
+**State:** open
 **Area:** KVM / VM launch scripts
 
 Evidence:
@@ -71,7 +71,7 @@ Exit criteria:
 
 ### TD-003 — The AnduinOS ISO builder is only a preparation script
 
-**State:** open  
+**State:** open
 **Area:** image build / release flow
 
 Evidence:
@@ -91,14 +91,14 @@ Exit criteria:
 
 ### TD-004 — The reference patch archive has drifted from the active patch stack
 
-**State:** open  
+**State:** open
 **Area:** patch maintenance
 
 Evidence:
 
 - Active patches live in [`packaging/arch/`](packaging/arch/)
 - Reference copies live in [`patches/cachyos/`](patches/cachyos/)
-- At minimum, the BBR3 and fixes snapshots are no longer identical to the active packaging patches
+- The current disabled snapshots for BORE, BBR3, CachyOS, and fixes are not byte-identical to the active packaging patches
 - [`packaging/arch/0005-hdmi.patch`](packaging/arch/0005-hdmi.patch) has no mirror under `patches/cachyos/`
 
 Why this matters:
@@ -114,7 +114,7 @@ Exit criteria:
 
 ### TD-005 — `configs/MacPro6,1/patches/` is a placeholder branch with no implementation
 
-**State:** open  
+**State:** open
 **Area:** model-specific patches
 
 Evidence:
@@ -136,7 +136,7 @@ Exit criteria:
 
 ### TD-006 — The no-initramfs design contract is still fuzzy
 
-**State:** open  
+**State:** open
 **Area:** packaging / boot behavior
 
 Evidence:
@@ -154,11 +154,34 @@ Exit criteria:
 - Decide whether initramfs is supported fallback or dead path
 - Remove the contradictory branch or document it as intentional compatibility behavior
 
+### TD-008 — Runtime sysctl policy copies are not aligned
+
+**State:** open
+**Area:** runtime tuning / KVM defaults
+
+Evidence:
+
+- [`configs/MacPro6,1/sysctl.d/99-macpro.conf`](configs/MacPro6,1/sysctl.d/99-macpro.conf) includes `kvm.ignore_msrs = 1`
+- [`image/common/overlay/etc/sysctl.d/99-macpro.conf`](image/common/overlay/etc/sysctl.d/99-macpro.conf) includes the same KVM line
+- [`packaging/arch/99-macpro.conf`](packaging/arch/99-macpro.conf), the copy installed by the Arch package path, does not include the KVM line
+- Top-level KVM documentation tells users that `ignore_msrs=1` is required for macOS guests
+
+Why this matters:
+
+- Users installing only the packaged kernel may not get the KVM default implied by the docs
+- The repo treats the three sysctl files as one logical policy, but they are no longer synchronized
+
+Exit criteria:
+
+- Decide whether `kvm.ignore_msrs` belongs in the package-installed sysctl policy
+- If yes, add it to [`packaging/arch/99-macpro.conf`](packaging/arch/99-macpro.conf)
+- If no, document why the package path intentionally leaves KVM MSR handling to modprobe/kernel-parameter configuration
+
 ## P3
 
 ### TD-007 — Historical baselines are still doing work as live reference points
 
-**State:** open  
+**State:** open
 **Area:** configs / benchmarks / expectations
 
 Evidence:
@@ -181,7 +204,7 @@ Exit criteria:
 
 1. Resolve `TD-001` and `TD-002` first. They are the main reasons the repo is hard to reason about.
 2. Then decide whether `TD-003`, `TD-004`, and `TD-005` stay as active surfaces or get archived/removed.
-3. Finish with `TD-006` and `TD-007` to align contracts and reduce documentation drift.
+3. Finish with `TD-006`, `TD-007`, and `TD-008` to align contracts and reduce documentation drift.
 
 ## Explicitly Not Listed Here
 

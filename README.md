@@ -67,6 +67,7 @@ Built on the CachyOS 7.0 patch set:
 - [macOS Tahoe KVM](docs/kvm-macos.md) -- run macOS in a VM on this kernel
 - [PVG Roadmap](docs/pvg-linux.md) -- GPU acceleration for macOS VMs
 - [Archived CachyOS ISO Repo](https://github.com/wolffcatskyy/cachyos-macpro-iso) -- historical reference only; archived on March 10, 2026
+- [Maintained CachyOS ISO Profile](https://github.com/ishad0w/linux-trash-can-cachyos-iso) -- sibling ISO project that consumes `linux-macpro61` packages and Mac Pro 6,1 live-boot defaults
 
 ## Roadmap
 
