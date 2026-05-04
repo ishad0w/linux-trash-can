@@ -6,7 +6,7 @@ Scope of this file:
 
 - Tracks debt that is visible from the committed tree, current docs, and executable paths
 - Focuses on things that are stale, partial, misleading, duplicated, or likely non-working without extra manual context
-- Uses the current repository state as of 2026-04-22
+- Uses the current repository state as of 2026-05-04
 
 This is not a full hardware validation report. Some items are confirmed by direct tree inspection and path mismatch, not by live boot/build testing.
 
@@ -54,6 +54,9 @@ Evidence:
 - [`docs/kvm-macos.md`](docs/kvm-macos.md) documents a `BaseSystem.dmg -> BaseSystem.img` conversion flow, while the generated toolkit keeps using `.dmg`
 - [`docs/kvm-macos.md`](docs/kvm-macos.md) and the simple OSX-KVM-style helpers use `-cpu host` plus QXL, while the generated toolkit currently emits `Haswell-noTSX` plus `-vga std`
 - [`scripts/launch-macos.sh`](scripts/launch-macos.sh) and the generated Tahoe toolkit both mount `BaseSystem.dmg` with `format=raw`, while the manual reference flow explicitly converts Apple recovery media to `BaseSystem.img` first
+- [`scripts/launch-macos.sh`](scripts/launch-macos.sh) also hardcodes the system OVMF location to `/usr/share/edk2/x64`, fixed SPICE port `5930`, and the default VM state directory to `$HOME/kvm`
+- [`macos-tahoe-kvm/scripts/boot-vnc.sh`](macos-tahoe-kvm/scripts/boot-vnc.sh) uses a fixed monitor socket at `/tmp/qemu-monitor.sock`
+- [`macos-tahoe-kvm/scripts/macos-tahoe-setup.sh`](macos-tahoe-kvm/scripts/macos-tahoe-setup.sh) can generate an `OPENCORE_IMAGE_PATH_HERE` placeholder into the launcher when OpenCore is absent
 
 Why this matters:
 
@@ -66,6 +69,7 @@ Exit criteria:
 - Standardize on one artifact layout and one recovery-image format
 - Deprecate or delete stale launch helpers
 - Make docs and scripts refer to the same directory contract
+- Move VM paths, OVMF discovery, SPICE/VNC ports, and monitor socket paths behind one documented config surface
 
 ## P2
 
@@ -177,6 +181,50 @@ Exit criteria:
 - If yes, add it to [`packaging/arch/99-macpro.conf`](packaging/arch/99-macpro.conf)
 - If no, document why the package path intentionally leaves KVM MSR handling to modprobe/kernel-parameter configuration
 
+### TD-009 — Install and desktop helpers mutate host-global paths without one policy
+
+**State:** open
+**Area:** packaging / host state / launcher install
+
+Evidence:
+
+- [`packaging/arch/linux-macpro61.install`](packaging/arch/linux-macpro61.install) syncs only to `/boot/efi`, masks `reboot.target`, and writes `/etc/profile.d/no-reboot.sh`
+- [`macos-tahoe-kvm/scripts/install-desktop-launcher.sh`](macos-tahoe-kvm/scripts/install-desktop-launcher.sh) installs into `/opt/macos-tahoe-kvm`, `/usr/share/applications`, `/usr/share/icons`, and `/etc/systemd/system`, then scans `/etc/passwd` to copy desktop shortcuts
+- The cold-boot policy is valid for this hardware, but today the package hook and desktop launcher make global changes without a shared config, dry-run mode, or explicit opt-out contract
+
+Why this matters:
+
+- Non-standard ESP layouts, non-desktop systems, or users who want the kernel without desktop/KVM helpers can get surprising global state changes
+- Package install behavior and ISO integration behavior can drift because they encode similar policy in unrelated scripts
+
+Exit criteria:
+
+- Document supported ESP mount points and make the package hook configurable, or provide a clear failure message when `/boot/efi` is not the intended target
+- Add an explicit opt-out or mode flag for global reboot masking and desktop launcher installation
+- Keep package hook behavior, ISO overlay behavior, and desktop launcher behavior in one documented runtime policy
+
+### TD-010 — External moving inputs are not pinned
+
+**State:** open
+**Area:** reproducibility / external downloads
+
+Evidence:
+
+- [`macos-tahoe-kvm/scripts/macos-tahoe-setup.sh`](macos-tahoe-kvm/scripts/macos-tahoe-setup.sh) downloads `macrecovery.py` from OpenCorePkg `master`
+- The same setup path asks Apple recovery for `-os latest`
+- [`image/anduinos/build.sh`](image/anduinos/build.sh) clones `AnduinOS.git` branch `main` and pulls the latest upstream state on repeated runs
+
+Why this matters:
+
+- A working build or KVM setup can change without any commit in this repository
+- Debugging regressions becomes harder because the exact external input set is not recorded
+
+Exit criteria:
+
+- Pin external scripts/repos to reviewed commit hashes or release tags
+- Record the selected macOS recovery catalog/version in generated state
+- Add an update procedure for intentionally bumping external inputs
+
 ## P3
 
 ### TD-007 — Historical baselines are still doing work as live reference points
@@ -200,11 +248,32 @@ Exit criteria:
 - Capture a same-generation baseline for the current package target, or
 - Keep the historical files but label them as archival snapshots everywhere they are referenced
 
+### TD-011 — Historical benchmark snapshot contains user-local paths and process noise
+
+**State:** open
+**Area:** evidence hygiene / privacy / reproducibility
+
+Evidence:
+
+- [`benchmarks/baseline-6.19-stock.txt`](benchmarks/baseline-6.19-stock.txt) includes captured process output with user-local paths such as `/home/michael/...`
+- The same file records transient running processes and model paths that are not part of the kernel project contract
+- The file is useful evidence, but it is not normalized or sanitized benchmark metadata
+
+Why this matters:
+
+- Readers can mistake incidental local workload state for project requirements
+- User-specific paths make the artifact harder to reuse as a clean public reference
+
+Exit criteria:
+
+- Replace the raw capture with normalized benchmark metadata, or
+- Keep the raw file but add a sanitized summary that is the only document used for support/performance claims
+
 ## Suggested Order
 
-1. Resolve `TD-001` and `TD-002` first. They are the main reasons the repo is hard to reason about.
-2. Then decide whether `TD-003`, `TD-004`, and `TD-005` stay as active surfaces or get archived/removed.
-3. Finish with `TD-006`, `TD-007`, and `TD-008` to align contracts and reduce documentation drift.
+1. Resolve `TD-001`, `TD-002`, and `TD-009` first. They define which artifacts are built, which VM path is supported, and what the package is allowed to change on a host.
+2. Then resolve `TD-003`, `TD-004`, `TD-005`, and `TD-010` so image prep, patch maintenance, placeholder paths, and external inputs become reproducible.
+3. Finish with `TD-006`, `TD-007`, `TD-008`, and `TD-011` to align boot/sysctl contracts and clean historical evidence.
 
 ## Explicitly Not Listed Here
 
