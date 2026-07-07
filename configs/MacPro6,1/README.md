@@ -21,10 +21,12 @@
 ## Performance Patches
 
 Applied in the Arch packaging path (`packaging/arch/PKGBUILD`), not by the raw `scripts/build.sh` path:
-- **BORE** scheduler (Burst-Oriented Response Enhancer)
-- **BBR3** TCP congestion control
-- CachyOS kernel tweaks and fixes
-- HDMI improvements
+
+- **BORE** scheduler from the CachyOS 7.1 patchsource
+- **BBR3** TCP congestion control, enabled as the default
+- CachyOS 7.1 release tarball/config flow
+- Mac Pro force-layer for built-in GPU, ethernet, storage, Apple SMC, Thunderbolt/USB4, audio, KVM, and firmware embedding
+- Historical local patch snapshots documented in [`../../packaging/arch/PATCHES.md`](../../packaging/arch/PATCHES.md)
 
 ## GPU Details
 
@@ -33,7 +35,7 @@ The D700 is based on AMD's Tahiti XT GPU (same silicon as the Radeon HD 7970). I
 - **Kernel driver:** the trimmed raw model config keeps `amdgpu` as a module (`CONFIG_DRM_AMDGPU=m`) with SI support enabled and disables legacy `radeon`; the Arch packaging path forces `amdgpu` built-in during `prepare()` but still starts from a more generic package seed config
 - **Firmware:** Tahiti: `tahiti_{ce,mc,me,pfp,rlc,smc}.bin` — Pitcairn: `pitcairn_{ce,mc,me,pfp,rlc,smc}.bin`
 - **Mesa driver:** `radeonsi` (OpenGL), `RADV` (Vulkan)
-- **Kernel 7.0:** Mature amdgpu SI support
+- **Kernel 7.1:** Mature amdgpu SI support plus retained HDMI/VRR/ALLM and power-cap behavior from the CachyOS source stack
 
 ## Hardware Compatibility Matrix
 
