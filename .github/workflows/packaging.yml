@@ -34,5 +34,5 @@ jobs:
               E18447AC260021D31F3FF6C4C8A2A4774B8B63C4 \
               E8B9AA39F054E30E8290D492C3C4820857F654FE
             cd packaging/arch
-            makepkg --nobuild --syncdeps --noconfirm --needed
+            makepkg --cleanbuild --nobuild --syncdeps --noconfirm --needed
           '
