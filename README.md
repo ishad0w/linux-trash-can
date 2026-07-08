@@ -2,7 +2,7 @@
 
 Custom Linux kernel for the Mac Pro 6,1 (Late 2013). CachyOS-based with BORE scheduler; the packaged Arch path forces critical drivers built-in, embeds GPU firmware, and keeps initramfs support for ISO/install compatibility.
 
-> Original upstream note: `wolffcatskyy/linux-mac` and `wolffcatskyy/cachyos-macpro-iso` were archived on March 10, 2026. Treat this repository (`ishad0w/linux-trash-can`) and the docs in this tree as the maintained source of truth.
+> Original upstream note: `wolffcatskyy/linux-mac` and `wolffcatskyy/cachyos-macpro-iso` were archived on March 10, 2026. Treat this repository (`ishad0w/linux-trash-can`) as the maintained kernel/product source.
 
 ## What This Is
 
@@ -60,14 +60,12 @@ Built on the CachyOS 7.1 patch set:
 
 ## Documentation
 
-- [Repository Map](MAP.md) -- file-by-file layout, change surfaces, and entry points
-- [Working Guide](AGENTS.md) -- contributor and automation rules, repo invariants, sync rules
-- [Technical Debt](TECH-DEBT.md) -- confirmed repo-level debt, stale paths, and cleanup priorities
 - [Image Workflow](image/README.md) -- current in-tree ISO/image preparation path
 - [GPU Acceleration Guide](docs/gpu-acceleration.md) -- full stack explainer, what works, performance tuning, roadmap
 - [Mesa Setup](docs/mesa.md) -- driver config, environment variables, multi-GPU
 - [macOS Tahoe KVM](docs/kvm-macos.md) -- run macOS in a VM on this kernel
 - [PVG Roadmap](docs/pvg-linux.md) -- GPU acceleration for macOS VMs
+- [Mac Pro Patch Carry Notes](packaging/arch/PATCHES.md) -- retained local patch snapshots and audit status
 - [Archived CachyOS ISO Repo](https://github.com/wolffcatskyy/cachyos-macpro-iso) -- historical reference only; archived on March 10, 2026
 - [Maintained CachyOS ISO Profile](https://github.com/ishad0w/linux-trash-can-cachyos-iso) -- sibling ISO project that consumes `linux-macpro61` packages and Mac Pro 6,1 live-boot defaults
 

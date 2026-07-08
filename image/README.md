@@ -23,7 +23,7 @@ What this tree can provide:
 - **Sysctl tuning** — kvm.ignore_msrs, network, memory optimizations
 - **First-boot Tahoe launcher setup** — systemd oneshot added to the image overlay
 
-The macOS recovery image (~700MB) downloads directly from Apple's servers when you click the desktop icon. The one-click setup implements the current toolkit flow: dependency checks, local OVMF staging, recovery download, disk creation, and launch-script generation. The manual OSX-KVM path remains separately documented in [`../docs/kvm-macos.md`](../docs/kvm-macos.md), and the remaining divergence between these Tahoe launch surfaces is tracked in [`../TECH-DEBT.md`](../TECH-DEBT.md).
+The macOS recovery image (~700MB) downloads directly from Apple's servers when you click the desktop icon. The one-click setup implements the current toolkit flow: dependency checks, local OVMF staging, recovery download, disk creation, and launch-script generation. The manual OSX-KVM path remains separately documented in [`../docs/kvm-macos.md`](../docs/kvm-macos.md).
 
 ## Build
 

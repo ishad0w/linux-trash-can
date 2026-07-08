@@ -37,8 +37,8 @@ macos-tahoe-kvm/
 This toolkit has its own `vm/`-based layout and keeps the Apple recovery file as
 `BaseSystem.dmg`. It is not the same layout as the manual OSX-KVM-style flow
 documented in [`../docs/kvm-macos.md`](../docs/kvm-macos.md).
-The remaining divergence between these Tahoe launch surfaces is tracked in
-[`../TECH-DEBT.md`](../TECH-DEBT.md).
+Keep both launch surfaces in sync when changing firmware, recovery image,
+or VM disk layout behavior.
 
 ### 1. Prepare OpenCore EFI
 
