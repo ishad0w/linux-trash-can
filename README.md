@@ -1,14 +1,14 @@
 # linux-mac
 
-Custom Linux kernel for the Mac Pro 6,1 (Late 2013). CachyOS-based with BORE scheduler; the packaged Arch path forces critical drivers built-in, embeds GPU firmware, and boots to desktop with no initramfs required.
+Custom Linux kernel for the Mac Pro 6,1 (Late 2013). CachyOS-based with BORE scheduler; the packaged Arch path forces critical drivers built-in, embeds GPU firmware, and keeps initramfs support for ISO/install compatibility.
 
 > Original upstream note: `wolffcatskyy/linux-mac` and `wolffcatskyy/cachyos-macpro-iso` were archived on March 10, 2026. Treat this repository (`ishad0w/linux-trash-can`) and the docs in this tree as the maintained source of truth.
 
 ## What This Is
 
-A kernel config set and Arch PKGBUILD for a Mac Pro 6,1 kernel line centered on the `7.0rc1` package path. CachyOS 7.0 base with BORE scheduler and BBR3; the package build forces critical Mac Pro drivers built-in and embeds GPU firmware in the kernel.
+A kernel config set and Arch PKGBUILD for a Mac Pro 6,1 kernel line centered on the CachyOS `7.1.3` package path. CachyOS 7.1 base with BORE scheduler and BBR3; the package build forces critical Mac Pro drivers built-in and embeds GPU firmware in the kernel.
 
-If you want the full CachyOS/BORE/BBR3 patch stack, use [`packaging/arch/`](packaging/arch). [`scripts/build.sh`](scripts/build.sh) builds the raw model config against vanilla kernel.org sources and only applies model-local patches; it is a separate raw-builder path, not the `7.0rc1` Arch package path.
+If you want the full CachyOS/BORE/BBR3 patch stack, use [`packaging/arch/`](packaging/arch). [`scripts/build.sh`](scripts/build.sh) builds the raw model config against vanilla kernel.org sources and only applies model-local patches; it is a separate raw-builder path, not the CachyOS 7.1 Arch package path.
 
 - **All GPU variants** — D300 (Pitcairn), D500 (Tahiti), D700 (Tahiti XT), firmware baked in
 - **CachyOS performance** — BORE scheduler, BBR3 congestion control, `-march=ivybridge -O3`
@@ -50,11 +50,13 @@ sudo poweroff  # Apple EFI needs cold boot — never reboot when switching kerne
 
 ## CachyOS Patches
 
-Built on the CachyOS 7.0 patch set:
-- **BORE** — Burst-Oriented Response Enhancer scheduler
-- **BBR3** — Google TCP congestion control v3
-- **CachyOS tweaks** — kernel optimizations
-- **HDMI improvements** — display fixes
+Built on the CachyOS 7.1 patch set:
+
+- **BORE** — Burst-Oriented Response Enhancer scheduler via upstream `kernel-patches/master/7.1`
+- **BBR3** — Google TCP congestion control v3, enabled as the default TCP congestion control
+- **CachyOS tweaks** — kernel optimizations from the CachyOS release tarball/config flow
+- **Mac Pro carry layer** — firmware embedding and built-in boot-critical drivers for FirePro, Broadcom ethernet, Apple SMC, storage, Thunderbolt/USB4, audio, KVM, and OverlayFS
+- **Retained local snapshots** — see [`packaging/arch/PATCHES.md`](packaging/arch/PATCHES.md) before deleting or re-enabling historical patch files
 
 ## Documentation
 
@@ -73,7 +75,7 @@ Built on the CachyOS 7.0 patch set:
 
 | Status | Milestone |
 |--------|-----------|
-| Done | CachyOS 7.0 base with BORE, BBR3, built-in amdgpu |
+| Done | CachyOS 7.1.3 base with BORE, BBR3, built-in amdgpu/tg3/AppleSMC/NVMe/USB4/KVM |
 | Done | All GPU variants, verified against lspci |
 | Done | KVM + macOS Tahoe virtualization |
 | Historical | Archived CachyOS-based Mac Pro ISO repo exists as reference only; current image work lives under [`image/`](image/) |

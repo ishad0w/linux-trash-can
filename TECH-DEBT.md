@@ -27,7 +27,7 @@ Evidence:
 
 - [`scripts/build.sh`](scripts/build.sh) defaults to `6.19`, downloads vanilla kernel.org tarballs, applies only `configs/<model>/patches/*.patch`, and builds with the host's plain `make`
 - [`configs/MacPro6,1/patches/`](configs/MacPro6,1/patches/) currently contains only [`README.md`](configs/MacPro6,1/patches/README.md), so the raw builder applies no active feature patch stack for this model
-- [`packaging/arch/PKGBUILD`](packaging/arch/PKGBUILD) targets `7.0rc1`, applies the active CachyOS-derived patch stack, uses `clang LLVM=1`, stages embedded firmware, and force-enables critical options
+- [`packaging/arch/PKGBUILD`](packaging/arch/PKGBUILD) targets CachyOS `7.1.3`, uses the CachyOS release tarball plus upstream 7.1 patchsource, stages embedded firmware, and force-enables critical options
 - [`configs/MacPro6,1/config`](configs/MacPro6,1/config) still keeps `CONFIG_DRM_AMDGPU=m`, while the package path forces `CONFIG_DRM_AMDGPU=y`
 
 Why this matters:
@@ -93,28 +93,28 @@ Exit criteria:
 - Either complete the end-to-end ISO build inside the repo script, or
 - Rename/re-scope the script and documentation so it is clearly an image-prep step rather than a full builder
 
-### TD-004 — The reference patch archive has drifted from the active patch stack
+### TD-004 — Local carry patches need a 7.1.3 port audit
 
 **State:** open
 **Area:** patch maintenance
 
 Evidence:
 
-- Active patches live in [`packaging/arch/`](packaging/arch/)
-- Reference copies live in [`patches/cachyos/`](patches/cachyos/)
-- The current disabled snapshots for BORE, BBR3, CachyOS, and fixes are not byte-identical to the active packaging patches
-- [`packaging/arch/0005-hdmi.patch`](packaging/arch/0005-hdmi.patch) has no mirror under `patches/cachyos/`
+- Active patch sources are now the CachyOS `7.1.3` release tarball plus upstream `kernel-patches/master/7.1`
+- Local snapshots still live in [`packaging/arch/`](packaging/arch/) and are documented in [`packaging/arch/PATCHES.md`](packaging/arch/PATCHES.md)
+- Dry-run testing shows `0001-bore.patch`, much of `0002-bbr3.patch`, much of `0003-cachy.patch`, and many `0005-hdmi.patch` hunks are already present or superseded in the 7.1.3 source stack
+- `0004-fixes.patch` and the failed portions of `0005-hdmi.patch` still need an explicit port audit before they can be re-enabled
 
 Why this matters:
 
-- The repo exposes two patch sets that look related but are no longer trustworthy mirrors
-- Rebases and patch reviews become ambiguous because there is no single visible source of truth
+- The repo must not silently lose Mac Pro-relevant behavior just because the upstream base moved
+- Rebases and patch reviews need a visible answer for each retained carry patch: active, superseded, or needs port
 
 Exit criteria:
 
-- Keep `patches/cachyos/` in sync automatically, or
-- Move archival copies out of the active tree, or
-- Delete the archive and treat `packaging/arch/*.patch` as the only source of truth
+- Finish a hunk-by-hunk 7.1.3 audit for `0004-fixes.patch` and `0005-hdmi.patch`
+- Either port the still-needed hunks into clean 7.1.3 carry patches or mark them superseded with source evidence
+- Keep [`packaging/arch/PATCHES.md`](packaging/arch/PATCHES.md) current whenever the patch stack changes
 
 ### TD-005 — `configs/MacPro6,1/patches/` is a placeholder branch with no implementation
 
@@ -158,7 +158,7 @@ Exit criteria:
 - Decide whether initramfs is supported fallback or dead path
 - Remove the contradictory branch or document it as intentional compatibility behavior
 
-### TD-008 — Runtime sysctl policy copies are not aligned
+### TD-008 — Runtime sysctl policy copies must stay aligned
 
 **State:** open
 **Area:** runtime tuning / KVM defaults
@@ -167,19 +167,17 @@ Evidence:
 
 - [`configs/MacPro6,1/sysctl.d/99-macpro.conf`](configs/MacPro6,1/sysctl.d/99-macpro.conf) includes `kvm.ignore_msrs = 1`
 - [`image/common/overlay/etc/sysctl.d/99-macpro.conf`](image/common/overlay/etc/sysctl.d/99-macpro.conf) includes the same KVM line
-- [`packaging/arch/99-macpro.conf`](packaging/arch/99-macpro.conf), the copy installed by the Arch package path, does not include the KVM line
+- [`packaging/arch/99-macpro.conf`](packaging/arch/99-macpro.conf), the copy installed by the Arch package path, now includes the KVM line
 - Top-level KVM documentation tells users that `ignore_msrs=1` is required for macOS guests
 
 Why this matters:
 
-- Users installing only the packaged kernel may not get the KVM default implied by the docs
-- The repo treats the three sysctl files as one logical policy, but they are no longer synchronized
+- Future edits can drift again because the same logical policy is copied in three places
 
 Exit criteria:
 
-- Decide whether `kvm.ignore_msrs` belongs in the package-installed sysctl policy
-- If yes, add it to [`packaging/arch/99-macpro.conf`](packaging/arch/99-macpro.conf)
-- If no, document why the package path intentionally leaves KVM MSR handling to modprobe/kernel-parameter configuration
+- Keep `configs/MacPro6,1/sysctl.d/99-macpro.conf`, `packaging/arch/99-macpro.conf`, and `image/common/overlay/etc/sysctl.d/99-macpro.conf` synchronized
+- Add a lightweight comparison check if this repo gains CI
 
 ### TD-009 — Install and desktop helpers mutate host-global paths without one policy
 
