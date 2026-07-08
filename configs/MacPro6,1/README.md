@@ -26,7 +26,7 @@ Applied in the Arch packaging path (`packaging/arch/PKGBUILD`), not by the raw `
 - **BBR3** TCP congestion control, enabled as the default
 - CachyOS 7.1 release tarball/config flow
 - Mac Pro force-layer for built-in GPU, ethernet, storage, Apple SMC, Thunderbolt/USB4, audio, KVM, and firmware embedding
-- Historical local patch snapshots documented in [`../../packaging/arch/PATCHES.md`](../../packaging/arch/PATCHES.md)
+- Patch carry inventory documented in [`../../packaging/arch/PATCHES.md`](../../packaging/arch/PATCHES.md)
 
 ## GPU Details
 

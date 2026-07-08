@@ -2,7 +2,7 @@
 
 ## Overview
 
-ISO build assets and integration notes for a Mac Pro 6,1-oriented image flow. The committed implementation prepares an AnduinOS-based build workspace, overlays Mac Pro defaults, and integrates the macOS Tahoe KVM toolkit. A fully custom kernel and Mesa stack are optional inputs, not guaranteed by the script unless you provide them.
+ISO build assets and integration notes for a Mac Pro 6,1-oriented image flow. The committed implementation prepares an AnduinOS-based build tree, overlays Mac Pro defaults, and integrates the macOS Tahoe KVM toolkit. A fully custom kernel and Mesa stack are optional inputs, not guaranteed by the script unless you provide them.
 
 | ISO | Base | Desktop | Installer | Target |
 |-----|------|---------|-----------|--------|
@@ -74,7 +74,7 @@ debootstrap live-build squashfs-tools xorriso mtools grub-efi-amd64-bin
 1. Build or obtain a custom kernel `.deb` if you want the non-stock kernel
 2. Build or obtain Mesa `.deb` packages if you want a non-stock Mesa stack
 3. Run `cd image/anduinos && sudo ./build.sh [--kernel-deb ...] [--mesa-debs ...]`
-4. Follow the manual build/remaster steps printed by the script inside the AnduinOS workspace
+4. Follow the manual build/remaster steps printed by the script inside the AnduinOS build tree
 5. Test the resulting ISO in QEMU
 6. Write to USB and boot Mac Pro 6,1 hardware
 7. Install via Calamares and use full poweroff, not warm reboot, when switching kernels

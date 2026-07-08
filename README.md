@@ -2,8 +2,6 @@
 
 Custom Linux kernel for the Mac Pro 6,1 (Late 2013). CachyOS-based with BORE scheduler; the packaged Arch path forces critical drivers built-in, embeds GPU firmware, and keeps initramfs support for ISO/install compatibility.
 
-> Original upstream note: `wolffcatskyy/linux-mac` and `wolffcatskyy/cachyos-macpro-iso` were archived on March 10, 2026. Treat this repository (`ishad0w/linux-trash-can`) as the maintained kernel/product source.
-
 ## What This Is
 
 A kernel config set and Arch PKGBUILD for a Mac Pro 6,1 kernel line centered on the CachyOS `7.1.3` package path. CachyOS 7.1 base with BORE scheduler and BBR3; the package build forces critical Mac Pro drivers built-in and embeds GPU firmware in the kernel.
@@ -56,7 +54,7 @@ Built on the CachyOS 7.1 patch set:
 - **BBR3** — Google TCP congestion control v3, enabled as the default TCP congestion control
 - **CachyOS tweaks** — kernel optimizations from the CachyOS release tarball/config flow
 - **Mac Pro carry layer** — firmware embedding and built-in boot-critical drivers for FirePro, Broadcom ethernet, Apple SMC, storage, Thunderbolt/USB4, audio, KVM, and OverlayFS
-- **Retained local snapshots** — see [`packaging/arch/PATCHES.md`](packaging/arch/PATCHES.md) before deleting or re-enabling historical patch files
+- **Patch carry inventory** — see [`packaging/arch/PATCHES.md`](packaging/arch/PATCHES.md) before changing retained Mac Pro carry patches
 
 ## Documentation
 
@@ -65,19 +63,15 @@ Built on the CachyOS 7.1 patch set:
 - [Mesa Setup](docs/mesa.md) -- driver config, environment variables, multi-GPU
 - [macOS Tahoe KVM](docs/kvm-macos.md) -- run macOS in a VM on this kernel
 - [PVG Roadmap](docs/pvg-linux.md) -- GPU acceleration for macOS VMs
-- [Mac Pro Patch Carry Notes](packaging/arch/PATCHES.md) -- retained local patch snapshots and audit status
-- [Archived CachyOS ISO Repo](https://github.com/wolffcatskyy/cachyos-macpro-iso) -- historical reference only; archived on March 10, 2026
+- [Mac Pro Patch Carry Notes](packaging/arch/PATCHES.md) -- retained patch inventory and carry rules
 - [Maintained CachyOS ISO Profile](https://github.com/ishad0w/linux-trash-can-cachyos-iso) -- sibling ISO project that consumes `linux-macpro61` packages and Mac Pro 6,1 live-boot defaults
 
-## Roadmap
+## Current Status
 
-| Status | Milestone |
-|--------|-----------|
-| Done | CachyOS 7.1.3 base with BORE, BBR3, built-in amdgpu/tg3/AppleSMC/NVMe/USB4/KVM |
-| Done | All GPU variants, verified against lspci |
-| Done | KVM + macOS Tahoe virtualization |
-| Historical | Archived CachyOS-based Mac Pro ISO repo exists as reference only; current image work lives under [`image/`](image/) |
-| Done | Driver trimming — removed ~3000 unused config options for faster builds |
+- CachyOS 7.1.3 base with BORE, BBR3, built-in amdgpu/tg3/AppleSMC/NVMe/USB4/KVM
+- All Mac Pro 6,1 GPU variants are covered
+- macOS Tahoe virtualization is supported through KVM/QEMU
+- Driver trimming removed roughly 3000 unused config options for faster builds
 
 
 ## Boot Configuration
@@ -90,7 +84,7 @@ Built on the CachyOS 7.1 patch set:
 
 2. **Cold boot only** - Apple EFI needs full power cycle for GPU init. The package masks \`reboot.target\` and aliases \`reboot\` to \`poweroff\` automatically.
 
-3. **Boot entries** - Default: \`linux-macpro61.conf\` (custom kernel), fallback: your distro's stock entry (for example \`arch-6.19.conf\` on the original Arch test system).
+3. **Boot entries** - Default: \`linux-macpro61.conf\` (custom kernel), fallback: your distro's stock entry.
 
 ## License
 
